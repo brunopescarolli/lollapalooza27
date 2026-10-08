@@ -1,125 +1,132 @@
-const norm = s => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-const INDEX = new Map();
-LINEUP.forEach(it => [it.n, ...it.a].forEach(k => INDEX.set(norm(k), it)));
+const $ = id => document.getElementById(id);
+let currentDay = "sexta";
+const selectedShows = new Set(); // Guarda os IDs dos shows marcados
 
-const CLIENT_ID = "959c89129e094a0083d8a8f19b38a73e";
-const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "").replace(/\/?$/, "/");
-const $= id => document.getElementById(id), status =$("status"), say = t => status.textContent = t;
-const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+// Configurações da Grade (Escala de tempo)
+const START_HOUR = 11; // 11:00 (Abertura)
+const END_HOUR = 24; // 00:00 (Fim)
+const MINUTE_HEIGHT = 2.2; // Pixels por minuto
 
-async function login() {
-  const verifier = b64(crypto.getRandomValues(new Uint8Array(48)));
-  const challenge = b64(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
-  sessionStorage.setItem("pkce", verifier);
-  location.href = "https://accounts.spotify.com/authorize?" + new URLSearchParams({ client_id: CLIENT_ID, response_type: "code", redirect_uri: REDIRECT, scope: "user-top-read", code_challenge_method: "S256", code_challenge: challenge });
+// Converte horário (ex: "14:30") para Minutos a partir do inicio (11:00)
+function timeToMins(timeStr) {
+  const [h, m] = timeStr.split(':').map(Number);
+  const hour24 = h === 0 ? 24 : h; // Meia noite vira 24 para a conta
+  return ((hour24 * 60) + m) - (START_HOUR * 60);
 }
 
-async function token(code) {
-  const r = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ client_id: CLIENT_ID, grant_type: "authorization_code", code, redirect_uri: REDIRECT, code_verifier: sessionStorage.getItem("pkce") })
-  });
-  if (!r.ok) throw new Error("falha ao autenticar (" + r.status + ")");
-  return (await r.json()).access_token;
+// Renderiza os botões de seleção de dia
+function renderTabs() {
+  $("tabs").innerHTML = Object.keys(SCHEDULE).map(key => `
+    <button class="tab-btn ${key === currentDay ? 'active' : ''}" onclick="changeDay('${key}')">
+      ${SCHEDULE[key].nome}
+    </button>
+  `).join("");
 }
 
-let TOKEN = null;
+window.changeDay = (key) => {
+  currentDay = key;
+  renderTabs();
+  renderGrid();
+};
 
-async function fetchTop(type, range) {
-  const r = await fetch(`https://api.spotify.com/v1/me/top/${type}?limit=50&time_range=${range}`, { headers: { Authorization: "Bearer " + TOKEN } });
-  if (r.status === 403) throw new Error("Acesso negado. Seu e-mail precisa estar cadastrado no dashboard do Spotify.");
-  if (!r.ok) throw new Error(`Erro da API do Spotify (${r.status})`);
-  return (await r.json()).items;
-}
+// Lida com o clique no show (selecionar/deselecionar)
+window.toggleShow = (showId) => {
+  if (selectedShows.has(showId)) {
+    selectedShows.delete(showId);
+  } else {
+    selectedShows.add(showId);
+  }
+  renderGrid(); // Re-renderiza para checar conflitos e atualizar as classes
+};
 
-async function load() {
-  say("Buscando seus artistas e músicas...");
-  try {
-    // Busca em paralelo os artistas e músicas dos 3 períodos
-    const [aShort, aMed, aLong, tShort, tMed, tLong] = await Promise.all([
-      fetchTop("artists", "short_term"), fetchTop("artists", "medium_term"), fetchTop("artists", "long_term"),
-      fetchTop("tracks", "short_term"), fetchTop("tracks", "medium_term"), fetchTop("tracks", "long_term")
-    ]);
+// Verifica conflitos entre shows selecionados
+function getConflictingShows(dayData) {
+  const conflicts = new Set();
+  const selectedInDay = dayData.shows.filter(s => selectedShows.has(s.id));
 
-    const stats = new Map();
-
-    const addArtists = (items) => {
-      items.forEach((a, i) => {
-        const it = INDEX.get(norm(a.name));
-        if (it) {
-          if (!stats.has(it)) stats.set(it, { trackCount: 0, bestRank: 999 });
-          if (i + 1 < stats.get(it).bestRank) stats.get(it).bestRank = i + 1;
-        }
-      });
-    };
-
-    const addTracks = (items) => {
-      items.forEach(t => {
-        t.artists.forEach(a => {
-          const it = INDEX.get(norm(a.name));
-          if (it) {
-            if (!stats.has(it)) stats.set(it, { trackCount: 0, bestRank: 999 });
-            stats.get(it).trackCount += 1;
-          }
-        });
-      });
-    };
-
-    addArtists(aShort); addArtists(aMed); addArtists(aLong);
-    addTracks(tShort); addTracks(tMed); addTracks(tLong);
-
-    if (stats.size === 0) {
-      $("result").hidden = true;
-      say("Nenhum artista do line-up apareceu nos seus tops recentes.");
-      return;
-    }
-
-    // Transforma o Map em array e ordena os resultados
-    const top = [...stats.entries()].map(([it, s]) => ({ it, ...s }));
-    top.sort((a, b) => {
-      if (b.trackCount !== a.trackCount) return b.trackCount - a.trackCount; // Prioriza quem tem mais faixas nos tops de tracks
-      return a.bestRank - b.bestRank; // Desempata pela melhor posição nos tops de artistas
-    });
-
-    const t10 = top.slice(0, 10);
-    $("rows").innerHTML = t10.map((data, i) => {
-      // Define a exibição respeitando o elemento .row .h span do style.css
-      const info = data.trackCount > 0
-        ? `${data.trackCount} ${data.trackCount === 1 ? 'música' : 'músicas'}<span>nos seus tops</span>`
-        : `#${data.bestRank}<span>no top artistas</span>`;
+  for (let i = 0; i < selectedInDay.length; i++) {
+    for (let j = i + 1; j < selectedInDay.length; j++) {
+      const showA = selectedInDay[i];
+      const showB = selectedInDay[j];
       
-      return `<div class="row"><div class="n">${i + 1}</div><div class="a"></div><div class="h">${info}</div></div>`;
-    }).join("");
+      const startA = timeToMins(showA.inicio);
+      const endA = timeToMins(showA.fim);
+      const startB = timeToMins(showB.inicio);
+      const endB = timeToMins(showB.fim);
 
-    [...document.querySelectorAll("#rows .a")].forEach((el, i) => el.textContent = t10[i].it.n);
-
-    // Correção de plural no rodapé
-    const total = top.length;
-    $("foot").textContent = `${total} ${total === 1 ? 'artista' : 'artistas'} do line-up encontrados`;
-    $("result").hidden = false;
-    say("");
-
-  } catch (e) {
-    say(e.message);
-  }
-}
-
-$("login").addEventListener("click", login);
-$("save").addEventListener("click", async () => {
-  const url = await htmlToImage.toPng($("card"), { pixelRatio: 2, backgroundColor: "#fffdf5" });
-  const a = document.createElement("a"); a.href = url; a.download = "meu-lolla-2027.png"; a.click();
-});
-
-(async () => {
-  const p = new URLSearchParams(location.search);
-  if (p.get("error")) { say("Login cancelado."); return; }
-  if (p.get("code")) {
-    history.replaceState({}, "", REDIRECT); $("login").hidden = true;
-    try {
-      TOKEN = await token(p.get("code"));
-      await load(); // Alterado para executar a nova função sem parâmetros engessados
-    } catch (e) {
-      say("Erro: " + e.message); $("login").hidden = false;
+      // Lógica matemática de intersecção (Se A começa antes de B terminar e A termina depois que B começar)
+      if (startA < endB && endA > startB) {
+        conflicts.add(showA.id);
+        conflicts.add(showB.id);
+      }
     }
   }
-})();
+  return conflicts;
+}
+
+// Renderiza a Grade Visual Inteira
+function renderGrid() {
+  const dayData = SCHEDULE[currentDay];
+  
+  // Muda a cor de fundo do CSS baseado no tema do dia
+  document.documentElement.style.setProperty('--bg-color', dayData.theme);
+
+  // Define altura total da grade
+  const totalMinutes = (END_HOUR - START_HOUR) * 60;
+  const gridHeight = totalMinutes * MINUTE_HEIGHT;
+  $("schedule-grid").style.height = `${gridHeight}px`;
+
+  // 1. Renderiza os cabeçalhos dos palcos
+  $("stage-headers").innerHTML = `<div class="time-col-header"></div>` + 
+    STAGES.map(s => `<div class="stage-name">${s}</div>`).join("");
+
+  // 2. Renderiza as linhas das horas (12H, 13H, etc)
+  let linesHTML = "";
+  for (let h = START_HOUR + 1; h <= END_HOUR; h++) {
+    const yPos = (h - START_HOUR) * 60 * MINUTE_HEIGHT;
+    const label = h === 24 ? "00H" : `${h}H`;
+    linesHTML += `
+      <div class="hour-line" style="top: ${yPos}px;">
+        <div class="hour-circle">${label}</div>
+      </div>
+    `;
+  }
+  $("hour-lines").innerHTML = linesHTML;
+
+  // 3. Verifica Conflitos Atuais
+  const conflicts = getConflictingShows(dayData);
+
+  // 4. Renderiza as colunas e os blocos de shows
+  let columnsHTML = STAGES.map((_, index) => `<div class="stage-col"></div>`);
+  $("stage-columns").innerHTML = columnsHTML.join("");
+  const cols = document.querySelectorAll('.stage-col');
+
+  dayData.shows.forEach(show => {
+    const topPx = timeToMins(show.inicio) * MINUTE_HEIGHT;
+    const heightPx = (timeToMins(show.fim) - timeToMins(show.inicio)) * MINUTE_HEIGHT;
+
+    const isSelected = selectedShows.has(show.id);
+    const isConflict = conflicts.has(show.id);
+
+    let classes = "show-block";
+    if (isSelected) classes += " selected";
+    if (isConflict) classes += " conflict";
+
+    const block = document.createElement("div");
+    block.className = classes;
+    block.style.top = `${topPx}px`;
+    block.style.height = `${heightPx}px`;
+    block.onclick = () => toggleShow(show.id);
+    
+    block.innerHTML = `
+      <div class="show-name">${show.artista}</div>
+      <div class="show-time">${show.inicio} - ${show.fim}</div>
+    `;
+    
+    cols[show.palco].appendChild(block);
+  });
+}
+
+// Inicia
+renderTabs();
+renderGrid();

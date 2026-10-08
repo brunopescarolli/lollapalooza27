@@ -3,29 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Seu Lolla 2027 no Spotify</title>
+<title>Time Table Lolla 2027</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@500;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="poster"><div class="content">
-<h1>Seu Lolla<br>no Spotify</h1>
-<p class="sub">Lollapalooza Brasil, 19, 20 e 21 de março de 2027. Entre com o Spotify e veja quais artistas do line-up estão no topo do seu top 50.</p>
 
-<button id="login" type="button">Entrar com Spotify</button>
+<header class="app-header">
+  <div class="header-content">
+    <h1>Monte seu Lolla</h1>
+    <p>Clique nos blocos para adicionar ao seu roteiro. Blocos vermelhos indicam conflito de horário!</p>
+    <div id="tabs" class="tabs"></div>
+  </div>
+</header>
 
-<div id="status" role="status" aria-live="polite"></div>
-<div id="result" hidden>
-  <div id="card"><h2>Meu top 10 do Lolla 2027</h2><div id="rows"></div><div class="foot" id="foot"></div></div>
-  <button id="save" type="button">Baixar imagem</button>
-</div>
-<p class="priv">O login usa só a permissão de ler seus artistas mais ouvidos. Nada é enviado para servidor nenhum.</p>
-</div></main>
+<main id="schedule-wrapper" class="schedule-scroll">
+  <div class="schedule-inner">
+    
+    <!-- Cabeçalhos dos Palcos (Fixo no topo) -->
+    <div class="stage-headers" id="stage-headers">
+      <div class="time-col-header"></div>
+      <!-- Preenchido via JS -->
+    </div>
 
-<script src="lineup.js"></script>
+    <!-- Grade de Horários -->
+    <div class="schedule-grid" id="schedule-grid">
+      <!-- Fundo de abertura (11H) -->
+      <div class="abertura-portoes">11H - ABERTURA DOS PORTÕES</div>
+      
+      <!-- Linhas de horas geradas via JS -->
+      <div id="hour-lines"></div>
+
+      <!-- Colunas dos palcos e blocos de shows gerados via JS -->
+      <div id="stage-columns" class="stage-columns"></div>
+    </div>
+
+  </div>
+</main>
+
+<script src="schedule_data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
