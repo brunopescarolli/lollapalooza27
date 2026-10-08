@@ -3,49 +3,46 @@
   --paper: #fffdf5;
   --red: #ff5a3c;
   --lime: #d8f236;
-  --bg-color: #38c1b5; /* Trocado via JS */
-  --minute-height: 2.2px; /* Escala da grade: 2.2px = 1 minuto */
+  --bg-color: #38c1b5;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; font-family: 'Archivo Narrow', sans-serif; background: var(--bg-color); transition: background 0.4s; color: var(--ink); }
 
-.app-header { background: var(--ink); color: var(--paper); padding: 20px; text-align: center; }
-.app-header h1 { font: 400 40px/1 'Anton', Impact, sans-serif; text-transform: uppercase; margin: 0 0 5px; color: var(--lime); }
-.app-header p { margin: 0 0 15px; font-size: 16px; opacity: 0.8; }
+.app-header { background: var(--ink); color: var(--paper); padding: 30px 20px; text-align: center; }
+.app-header h1 { font: 400 48px/1 'Anton', Impact, sans-serif; text-transform: uppercase; margin: 0 0 10px; color: var(--lime); }
+.app-header p { margin: 0 0 20px; font-size: 18px; opacity: 0.8; }
 
-.tabs { display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto; }
-.tab-btn { background: var(--paper); color: var(--ink); font: 400 20px 'Anton', sans-serif; text-transform: uppercase; padding: 8px 20px; border: 2px solid transparent; cursor: pointer; }
-.tab-btn.active { background: var(--red); color: var(--paper); border: 2px solid var(--paper); }
+.tabs { display: flex; justify-content: center; gap: 12px; max-width: 600px; margin: 0 auto; flex-wrap: wrap; }
+.tab-btn { background: var(--paper); color: var(--ink); font: 400 22px 'Anton', sans-serif; text-transform: uppercase; padding: 12px 24px; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
+.tab-btn.active { background: var(--red); color: var(--paper); border: 3px solid var(--paper); }
 
-/* Container da Grade */
-.schedule-scroll { overflow-x: auto; padding: 20px; min-height: 100vh; }
-.schedule-inner { min-width: 1000px; max-width: 1200px; margin: 0 auto; position: relative; background: rgba(0,0,0,0.05); padding-bottom: 50px; }
+.download-btn { margin-top: 24px; background: var(--lime); color: var(--ink); font: 400 20px 'Anton', Impact, sans-serif; text-transform: uppercase; padding: 12px 24px; border: 3px solid var(--ink); cursor: pointer; box-shadow: 6px 6px 0 var(--ink); transition: transform 0.1s; }
+.download-btn:hover { background: var(--paper); }
+.download-btn:active { transform: translate(3px, 3px); box-shadow: 3px 3px 0 var(--ink); }
 
-/* Cabeçalhos dos Palcos */
-.stage-headers { display: flex; position: sticky; top: 0; z-index: 50; background: var(--bg-color); padding-bottom: 10px; transition: background 0.4s; }
-.time-col-header { width: 60px; flex-shrink: 0; }
-.stage-name { flex: 1; background: rgba(20,20,20,0.7); color: white; text-align: center; margin: 0 2px; padding: 12px 5px; font: 400 18px 'Anton', sans-serif; text-transform: uppercase; white-space: nowrap; }
+.schedule-scroll { overflow-x: auto; padding: 40px 20px; min-height: 100vh; }
+.schedule-inner { min-width: 1200px; max-width: 1400px; margin: 0 auto; position: relative; background: rgba(0,0,0,0.03); padding-bottom: 80px; }
 
-/* Grade Base */
-.schedule-grid { position: relative; display: flex; height: 1600px; /* Definido via JS baseado nas horas */ }
-.abertura-portoes { position: absolute; top: 0; left: 60px; right: 0; background: var(--lime); text-align: center; font: 400 22px 'Anton', sans-serif; padding: 8px 0; z-index: 10; border: 2px solid var(--ink); border-radius: 4px; box-shadow: 4px 4px 0 var(--ink); }
+.stage-headers { display: flex; position: sticky; top: 0; z-index: 50; background: var(--bg-color); padding-bottom: 15px; transition: background 0.4s; }
+.time-col-header { width: 80px; flex-shrink: 0; }
+.stage-name { flex: 1; background: var(--ink); color: var(--paper); text-align: center; margin: 0 4px; padding: 16px 8px; font: 400 24px 'Anton', sans-serif; text-transform: uppercase; white-space: nowrap; border-radius: 4px; }
 
-/* Linhas e Marcadores de Hora */
-.hour-line { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0,0,0,0.15); z-index: 1; }
-.hour-circle { position: absolute; left: 5px; top: 0; transform: translateY(-50%); width: 45px; height: 45px; background: var(--ink); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 400 18px 'Anton', sans-serif; z-index: 2; }
+.schedule-grid { position: relative; display: flex; margin-top: 10px; }
+.abertura-portoes { position: absolute; top: 0; left: 80px; right: 0; background: var(--lime); text-align: center; font: 400 26px 'Anton', sans-serif; padding: 12px 0; z-index: 10; border: 3px solid var(--ink); border-radius: 6px; box-shadow: 6px 6px 0 var(--ink); }
 
-/* Colunas e Blocos de Shows */
-.stage-columns { display: flex; flex: 1; margin-left: 60px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-.stage-col { flex: 1; position: relative; border-left: 1px dashed rgba(0,0,0,0.1); margin: 0 2px; }
+.hour-line { position: absolute; left: 0; right: 0; border-top: 2px solid rgba(20,20,20,0.2); z-index: 1; }
+.hour-circle { position: absolute; left: 0; top: 0; transform: translateY(-50%); width: 65px; height: 65px; background: var(--ink); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 400 24px 'Anton', sans-serif; z-index: 2; border: 3px solid var(--paper); box-shadow: 4px 4px 0 rgba(0,0,0,0.2); }
 
-.show-block { position: absolute; left: 4px; right: 4px; background: var(--paper); border: 2px solid var(--ink); border-radius: 4px; padding: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; user-select: none; z-index: 10; transition: all 0.15s ease; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
-.show-block:hover { transform: scale(1.02); z-index: 20; }
-.show-name { font: 400 20px/1 'Anton', Impact, sans-serif; text-transform: uppercase; }
-.show-time { font: 700 13px 'Archivo Narrow', sans-serif; opacity: 0.7; margin-top: 4px; }
+.stage-columns { display: flex; flex: 1; margin-left: 80px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+.stage-col { flex: 1; position: relative; border-left: 2px dashed rgba(20,20,20,0.15); margin: 0 4px; }
 
-/* Estados de Interação */
-.show-block.selected { background: var(--lime); box-shadow: 6px 6px 0 var(--ink); border-width: 3px; z-index: 15; }
-.show-block.conflict { background: var(--red); color: white; box-shadow: 6px 6px 0 var(--ink); animation: pulse 1s infinite alternate; }
+.show-block { position: absolute; left: 5px; right: 5px; background: var(--paper); border: 3px solid var(--ink); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; user-select: none; z-index: 10; transition: all 0.15s ease; box-shadow: 4px 4px 8px rgba(0,0,0,0.15); overflow: hidden; }
+.show-block:hover { transform: scale(1.03); z-index: 20; }
+.show-name { font: 400 26px/1.1 'Anton', Impact, sans-serif; text-transform: uppercase; }
+.show-time { font: 700 16px 'Archivo Narrow', sans-serif; opacity: 0.75; margin-top: 6px; }
+
+.show-block.selected { background: var(--lime); box-shadow: 8px 8px 0 var(--ink); border-width: 4px; z-index: 15; }
+.show-block.conflict { background: var(--red); color: white; box-shadow: 8px 8px 0 var(--ink); animation: pulse 1s infinite alternate; }
 .show-block.conflict .show-time { opacity: 1; color: var(--lime); }
 
 @keyframes pulse {
@@ -53,22 +50,29 @@ html, body { margin: 0; padding: 0; font-family: 'Archivo Narrow', sans-serif; b
   to { transform: scale(1.05) rotate(-1deg); }
 }
 
-.download-btn {
-  margin-top: 20px;
-  background: var(--lime);
-  color: var(--ink);
-  font: 400 18px 'Anton', Impact, sans-serif;
-  text-transform: uppercase;
-  padding: 10px 20px;
-  border: 2px solid var(--ink);
-  cursor: pointer;
-  box-shadow: 4px 4px 0 var(--ink);
-  transition: transform 0.1s;
-}
-.download-btn:hover {
-  background: var(--paper);
-}
-.download-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 var(--ink);
+/* RESPONSIVIDADE PARA CELULARES */
+@media (max-width: 768px) {
+  .app-header { padding: 20px 10px; }
+  .app-header h1 { font-size: 36px; }
+  .app-header p { font-size: 14px; margin-bottom: 15px; }
+  
+  .tab-btn { font-size: 16px; padding: 10px 15px; border-width: 2px; }
+  .download-btn { font-size: 16px; padding: 10px 15px; border-width: 2px; }
+
+  .schedule-scroll { padding: 15px 10px; }
+  .schedule-inner { min-width: 850px; } /* Ajuste crítico: Mantém o scroll horizontal suave no celular sem quebrar os blocos */
+
+  .time-col-header { width: 50px; }
+  .stage-columns { margin-left: 50px; }
+  .abertura-portoes { left: 50px; font-size: 18px; padding: 8px 0; border-width: 2px; }
+
+  .hour-circle { width: 45px; height: 45px; font-size: 16px; border-width: 2px; box-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
+  .stage-name { font-size: 16px; padding: 10px 5px; }
+
+  .show-block { padding: 5px; border-width: 2px; border-radius: 4px; box-shadow: 2px 2px 4px rgba(0,0,0,0.15); }
+  .show-name { font-size: 16px; }
+  .show-time { font-size: 12px; margin-top: 4px; }
+  
+  .show-block.selected { border-width: 3px; box-shadow: 4px 4px 0 var(--ink); }
+  .show-block.conflict { border-width: 3px; box-shadow: 4px 4px 0 var(--ink); }
 }

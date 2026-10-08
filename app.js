@@ -2,16 +2,14 @@ const $ = id => document.getElementById(id);
 let currentDay = "sexta";
 const selectedShows = new Set();
 
-// RECUPERA DO CACHE (LocalStorage)
 const savedSelections = localStorage.getItem('lolla2027_selections');
 if (savedSelections) {
   JSON.parse(savedSelections).forEach(id => selectedShows.add(id));
 }
 
-// Configurações da Grade
 const START_HOUR = 11;
 const END_HOUR = 24;
-const MINUTE_HEIGHT = 2.2;
+const MINUTE_HEIGHT = 3.5;
 
 function timeToMins(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
@@ -40,9 +38,7 @@ window.toggleShow = (showId) => {
     selectedShows.add(showId);
   }
   
-  // SALVA NO CACHE SEMPRE QUE HOUVER ALTERAÇÃO
   localStorage.setItem('lolla2027_selections', JSON.stringify([...selectedShows]));
-  
   renderGrid();
 };
 
@@ -71,7 +67,6 @@ function getConflictingShows(dayData) {
 
 function renderGrid() {
   const dayData = SCHEDULE[currentDay];
-  
   document.documentElement.style.setProperty('--bg-color', dayData.theme);
 
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
@@ -125,24 +120,29 @@ function renderGrid() {
   });
 }
 
-// GERAÇÃO DA IMAGEM E DOWNLOAD
 $("btn-download").addEventListener("click", async () => {
   const btn = $("btn-download");
   const originalText = btn.textContent;
-  btn.textContent = "GERANDO...";
+  btn.textContent = "GERANDO (AGUARDE)...";
   
   const printArea = $("print-area");
   
   try {
-    // Pega a cor exata do dia selecionado (lilás, verde ou vermelho)
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
+    
+    // Força a biblioteca a considerar o tamanho real do elemento, essencial para celulares
+    const scrollWidth = printArea.scrollWidth;
+    const scrollHeight = printArea.scrollHeight;
     
     const dataUrl = await htmlToImage.toPng(printArea, {
       backgroundColor: bgColor,
-      pixelRatio: 2, // Dobra a resolução para o texto não ficar pixelado
+      pixelRatio: 2,
+      cacheBust: true,
+      width: scrollWidth,
+      height: scrollHeight,
       style: {
         margin: '0',
-        padding: '20px' // Dá um respiro nas bordas da imagem gerada
+        padding: '30px'
       }
     });
     
@@ -151,13 +151,12 @@ $("btn-download").addEventListener("click", async () => {
     link.href = dataUrl;
     link.click();
   } catch (error) {
-    console.error("Erro ao gerar a imagem:", error);
-    alert("Houve um erro ao baixar a imagem.");
+    console.error(error);
+    alert("Ocorreu um erro ao baixar. Tente recarregar a página.");
   } finally {
     btn.textContent = originalText;
   }
 });
 
-// Inicia
 renderTabs();
 renderGrid();

@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@500;700&display=swap" rel="stylesheet">
-<!-- Biblioteca para gerar a imagem -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -16,7 +15,7 @@
 <header class="app-header">
   <div class="header-content">
     <h1>Monte seu Lolla</h1>
-    <p>Clique nos blocos para adicionar ao seu roteiro. Blocos vermelhos indicam conflito de horário!</p>
+    <p>Clique nos blocos para adicionar ao seu roteiro. Blocos vermelhos indicam conflito!</p>
     <div id="tabs" class="tabs"></div>
     <button id="btn-download" class="download-btn">Baixar Grade em Imagem</button>
   </div>
@@ -25,12 +24,10 @@
 <main id="schedule-wrapper" class="schedule-scroll">
   <div class="schedule-inner" id="print-area">
     
-    <!-- Cabeçalhos dos Palcos -->
     <div class="stage-headers" id="stage-headers">
       <div class="time-col-header"></div>
     </div>
 
-    <!-- Grade de Horários -->
     <div class="schedule-grid" id="schedule-grid">
       <div class="abertura-portoes">11H - ABERTURA DOS PORTÕES</div>
       <div id="hour-lines"></div>
