@@ -130,7 +130,6 @@ $("btn-download").addEventListener("click", async () => {
   try {
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
     
-    // Força a biblioteca a considerar o tamanho real do elemento, essencial para celulares
     const scrollWidth = printArea.scrollWidth;
     const scrollHeight = printArea.scrollHeight;
     
@@ -140,10 +139,7 @@ $("btn-download").addEventListener("click", async () => {
       cacheBust: true,
       width: scrollWidth,
       height: scrollHeight,
-      style: {
-        margin: '0',
-        padding: '30px'
-      }
+      style: { margin: '0', padding: '0' } // Removido o padding artificial que causava o corte à direita
     });
     
     const link = document.createElement('a');
