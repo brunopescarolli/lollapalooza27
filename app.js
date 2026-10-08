@@ -1,20 +1,24 @@
 const $ = id => document.getElementById(id);
 let currentDay = "sexta";
-const selectedShows = new Set(); // Guarda os IDs dos shows marcados
+const selectedShows = new Set();
 
-// Configurações da Grade (Escala de tempo)
-const START_HOUR = 11; // 11:00 (Abertura)
-const END_HOUR = 24; // 00:00 (Fim)
-const MINUTE_HEIGHT = 2.2; // Pixels por minuto
+// RECUPERA DO CACHE (LocalStorage)
+const savedSelections = localStorage.getItem('lolla2027_selections');
+if (savedSelections) {
+  JSON.parse(savedSelections).forEach(id => selectedShows.add(id));
+}
 
-// Converte horário (ex: "14:30") para Minutos a partir do inicio (11:00)
+// Configurações da Grade
+const START_HOUR = 11;
+const END_HOUR = 24;
+const MINUTE_HEIGHT = 2.2;
+
 function timeToMins(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
-  const hour24 = h === 0 ? 24 : h; // Meia noite vira 24 para a conta
+  const hour24 = h === 0 ? 24 : h;
   return ((hour24 * 60) + m) - (START_HOUR * 60);
 }
 
-// Renderiza os botões de seleção de dia
 function renderTabs() {
   $("tabs").innerHTML = Object.keys(SCHEDULE).map(key => `
     <button class="tab-btn ${key === currentDay ? 'active' : ''}" onclick="changeDay('${key}')">
@@ -29,17 +33,19 @@ window.changeDay = (key) => {
   renderGrid();
 };
 
-// Lida com o clique no show (selecionar/deselecionar)
 window.toggleShow = (showId) => {
   if (selectedShows.has(showId)) {
     selectedShows.delete(showId);
   } else {
     selectedShows.add(showId);
   }
-  renderGrid(); // Re-renderiza para checar conflitos e atualizar as classes
+  
+  // SALVA NO CACHE SEMPRE QUE HOUVER ALTERAÇÃO
+  localStorage.setItem('lolla2027_selections', JSON.stringify([...selectedShows]));
+  
+  renderGrid();
 };
 
-// Verifica conflitos entre shows selecionados
 function getConflictingShows(dayData) {
   const conflicts = new Set();
   const selectedInDay = dayData.shows.filter(s => selectedShows.has(s.id));
@@ -54,7 +60,6 @@ function getConflictingShows(dayData) {
       const startB = timeToMins(showB.inicio);
       const endB = timeToMins(showB.fim);
 
-      // Lógica matemática de intersecção (Se A começa antes de B terminar e A termina depois que B começar)
       if (startA < endB && endA > startB) {
         conflicts.add(showA.id);
         conflicts.add(showB.id);
@@ -64,23 +69,18 @@ function getConflictingShows(dayData) {
   return conflicts;
 }
 
-// Renderiza a Grade Visual Inteira
 function renderGrid() {
   const dayData = SCHEDULE[currentDay];
   
-  // Muda a cor de fundo do CSS baseado no tema do dia
   document.documentElement.style.setProperty('--bg-color', dayData.theme);
 
-  // Define altura total da grade
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
   const gridHeight = totalMinutes * MINUTE_HEIGHT;
   $("schedule-grid").style.height = `${gridHeight}px`;
 
-  // 1. Renderiza os cabeçalhos dos palcos
   $("stage-headers").innerHTML = `<div class="time-col-header"></div>` + 
     STAGES.map(s => `<div class="stage-name">${s}</div>`).join("");
 
-  // 2. Renderiza as linhas das horas (12H, 13H, etc)
   let linesHTML = "";
   for (let h = START_HOUR + 1; h <= END_HOUR; h++) {
     const yPos = (h - START_HOUR) * 60 * MINUTE_HEIGHT;
@@ -93,10 +93,8 @@ function renderGrid() {
   }
   $("hour-lines").innerHTML = linesHTML;
 
-  // 3. Verifica Conflitos Atuais
   const conflicts = getConflictingShows(dayData);
 
-  // 4. Renderiza as colunas e os blocos de shows
   let columnsHTML = STAGES.map((_, index) => `<div class="stage-col"></div>`);
   $("stage-columns").innerHTML = columnsHTML.join("");
   const cols = document.querySelectorAll('.stage-col');
@@ -126,6 +124,39 @@ function renderGrid() {
     cols[show.palco].appendChild(block);
   });
 }
+
+// GERAÇÃO DA IMAGEM E DOWNLOAD
+$("btn-download").addEventListener("click", async () => {
+  const btn = $("btn-download");
+  const originalText = btn.textContent;
+  btn.textContent = "GERANDO...";
+  
+  const printArea = $("print-area");
+  
+  try {
+    // Pega a cor exata do dia selecionado (lilás, verde ou vermelho)
+    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
+    
+    const dataUrl = await htmlToImage.toPng(printArea, {
+      backgroundColor: bgColor,
+      pixelRatio: 2, // Dobra a resolução para o texto não ficar pixelado
+      style: {
+        margin: '0',
+        padding: '20px' // Dá um respiro nas bordas da imagem gerada
+      }
+    });
+    
+    const link = document.createElement('a');
+    link.download = `roteiro-lolla-2027-${currentDay}.png`;
+    link.href = dataUrl;
+    link.click();
+  } catch (error) {
+    console.error("Erro ao gerar a imagem:", error);
+    alert("Houve um erro ao baixar a imagem.");
+  } finally {
+    btn.textContent = originalText;
+  }
+});
 
 // Inicia
 renderTabs();

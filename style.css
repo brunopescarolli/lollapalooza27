@@ -52,3 +52,23 @@ html, body { margin: 0; padding: 0; font-family: 'Archivo Narrow', sans-serif; b
   from { transform: scale(1.02); }
   to { transform: scale(1.05) rotate(-1deg); }
 }
+
+.download-btn {
+  margin-top: 20px;
+  background: var(--lime);
+  color: var(--ink);
+  font: 400 18px 'Anton', Impact, sans-serif;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  border: 2px solid var(--ink);
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 0.1s;
+}
+.download-btn:hover {
+  background: var(--paper);
+}
+.download-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
