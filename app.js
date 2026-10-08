@@ -69,6 +69,46 @@ function renderGrid() {
   const dayData = SCHEDULE[currentDay];
   document.documentElement.style.setProperty('--bg-color', dayData.theme);
 
+  const isMobile = window.innerWidth <= 768;
+
+  if (isMobile) {
+    // RENDERIZAÇÃO VERTICAL PARA CELULAR (Sem precisar rolar para os lados)
+    $("stage-headers").style.display = "none";
+    $("schedule-grid").style.display = "none";
+    
+    const conflicts = getConflictingShows(dayData);
+    
+    // Ordena os shows cronologicamente para o feed vertical
+    const sortedShows = [...dayData.shows].sort((a, b) => timeToMins(a.inicio) - timeToMins(b.inicio));
+
+    let html = `<div style="font-weight:700; background:var(--lime); color:var(--ink); padding:10px; text-align:center; border:2px solid var(--ink); margin-bottom:15px; font-family:'Anton'; font-size:18px;">${dayData.nome.toUpperCase()} - TODOS OS SHOWS</div>`;
+    
+    sortedShows.forEach(show => {
+      const isSelected = selectedShows.has(show.id);
+      const isConflict = conflicts.has(show.id);
+      const palcoNome = STAGES[show.palco];
+
+      let bgStyle = "background: var(--paper);";
+      if (isSelected) bgStyle = "background: var(--lime); border-width: 4px;";
+      if (isConflict) bgStyle = "background: var(--red); color: white;";
+
+      html += `
+        <div onclick="toggleShow('${show.id}')" style="${bgStyle} border:3px solid var(--ink); border-radius:6px; padding:12px; margin-bottom:10px; cursor:pointer; box-shadow:3px 3px 0 var(--ink);">
+          <div style="font-family:'Anton'; font-size:20px; text-transform:uppercase; margin-bottom:4px;">${show.artista}</div>
+          <div style="font-size:14px; font-weight:700; opacity:0.8;">📍 ${palcoNome} | ⏰ ${show.inicio} - ${show.fim}</div>
+          ${isConflict ? '<div style="margin-top:5px; background:var(--ink); color:var(--lime); font-size:12px; padding:2px 6px; display:inline-block; font-weight:700;">⚠️ CONFLITO DE HORÁRIO</div>' : ''}
+        </div>
+      `;
+    });
+
+    $("stage-columns").innerHTML = html;
+    return;
+  }
+
+  // RENDERIZAÇÃO COMPLETA EM GRADE PARA DESKTOP/TABLET
+  $("stage-headers").style.display = "flex";
+  $("schedule-grid.desktop-grid") ? $("schedule-grid").style.display = "flex" : $("schedule-grid").style.display = "flex";
+
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
   const gridHeight = totalMinutes * MINUTE_HEIGHT;
   $("schedule-grid").style.height = `${gridHeight}px`;
@@ -90,7 +130,7 @@ function renderGrid() {
 
   const conflicts = getConflictingShows(dayData);
 
-  let columnsHTML = STAGES.map((_, index) => `<div class="stage-col"></div>`);
+  let columnsHTML = STAGES.map(() => `<div class="stage-col"></div>`);
   $("stage-columns").innerHTML = columnsHTML.join("");
   const cols = document.querySelectorAll('.stage-col');
 
@@ -112,8 +152,10 @@ function renderGrid() {
     block.onclick = () => toggleShow(show.id);
     
     block.innerHTML = `
-      <div class="show-name">${show.artista}</div>
-      <div class="show-time">${show.inicio} - ${show.fim}</div>
+      <div class="show-content">
+        <div class="show-name">${show.artista}</div>
+        <div class="show-time">${show.inicio} - ${show.fim}</div>
+      </div>
     `;
     
     cols[show.palco].appendChild(block);
@@ -130,8 +172,8 @@ $("btn-download").addEventListener("click", async () => {
   try {
     const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
     
-    const scrollWidth = printArea.scrollWidth;
-    const scrollHeight = printArea.scrollHeight;
+    const scrollWidth = printArea.scrollWidth + 40;
+    const scrollHeight = printArea.scrollHeight + 40;
     
     const dataUrl = await htmlToImage.toPng(printArea, {
       backgroundColor: bgColor,
@@ -139,7 +181,7 @@ $("btn-download").addEventListener("click", async () => {
       cacheBust: true,
       width: scrollWidth,
       height: scrollHeight,
-      style: { margin: '0', padding: '0' } // Removido o padding artificial que causava o corte à direita
+      style: { margin: '0', padding: '20px' } 
     });
     
     const link = document.createElement('a');
@@ -152,6 +194,10 @@ $("btn-download").addEventListener("click", async () => {
   } finally {
     btn.textContent = originalText;
   }
+});
+
+window.addEventListener('resize', () => {
+  renderGrid();
 });
 
 renderTabs();
