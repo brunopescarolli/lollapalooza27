@@ -72,42 +72,55 @@ function renderGrid() {
   const isMobile = window.innerWidth <= 768;
 
   if (isMobile) {
-    // RENDERIZAÇÃO VERTICAL PARA CELULAR (Sem precisar rolar para os lados)
+    // Layout mobile: lista vertical, sem qualquer necessidade de rolagem horizontal.
     $("stage-headers").style.display = "none";
     $("schedule-grid").style.display = "none";
-    
-    const conflicts = getConflictingShows(dayData);
-    
-    // Ordena os shows cronologicamente para o feed vertical
-    const sortedShows = [...dayData.shows].sort((a, b) => timeToMins(a.inicio) - timeToMins(b.inicio));
+    $("mobile-feed").style.display = "block";
 
-    let html = `<div style="font-weight:700; background:var(--lime); color:var(--ink); padding:10px; text-align:center; border:2px solid var(--ink); margin-bottom:15px; font-family:'Anton'; font-size:18px;">${dayData.nome.toUpperCase()} - TODOS OS SHOWS</div>`;
-    
+    const conflicts = getConflictingShows(dayData);
+    const sortedShows = [...dayData.shows].sort(
+      (a, b) => timeToMins(a.inicio) - timeToMins(b.inicio)
+    );
+
+    let html = `
+      <div class="mobile-day-title">
+        ${dayData.nome.toUpperCase()} — TODOS OS SHOWS
+      </div>
+      <div class="mobile-show-list">
+    `;
+
     sortedShows.forEach(show => {
       const isSelected = selectedShows.has(show.id);
       const isConflict = conflicts.has(show.id);
       const palcoNome = STAGES[show.palco];
 
-      let bgStyle = "background: var(--paper);";
-      if (isSelected) bgStyle = "background: var(--lime); border-width: 4px;";
-      if (isConflict) bgStyle = "background: var(--red); color: white;";
+      let classes = "mobile-show";
+      if (isSelected) classes += " selected";
+      if (isConflict) classes += " conflict";
 
       html += `
-        <div onclick="toggleShow('${show.id}')" style="${bgStyle} border:3px solid var(--ink); border-radius:6px; padding:12px; margin-bottom:10px; cursor:pointer; box-shadow:3px 3px 0 var(--ink);">
-          <div style="font-family:'Anton'; font-size:20px; text-transform:uppercase; margin-bottom:4px;">${show.artista}</div>
-          <div style="font-size:14px; font-weight:700; opacity:0.8;">📍 ${palcoNome} | ⏰ ${show.inicio} - ${show.fim}</div>
-          ${isConflict ? '<div style="margin-top:5px; background:var(--ink); color:var(--lime); font-size:12px; padding:2px 6px; display:inline-block; font-weight:700;">⚠️ CONFLITO DE HORÁRIO</div>' : ''}
+        <div class="${classes}" onclick="toggleShow('${show.id}')">
+          <div class="mobile-show-main">
+            <div class="mobile-show-name">${show.artista}</div>
+            <div class="mobile-show-stage">${palcoNome}</div>
+          </div>
+          <div class="mobile-show-time">${show.inicio} — ${show.fim}</div>
+          ${isConflict
+            ? '<div class="mobile-conflict">⚠ CONFLITO DE HORÁRIO</div>'
+            : ''}
         </div>
       `;
     });
 
-    $("stage-columns").innerHTML = html;
+    html += `</div>`;
+    $("mobile-feed").innerHTML = html;
     return;
   }
 
+  $("mobile-feed").style.display = "none";
   // RENDERIZAÇÃO COMPLETA EM GRADE PARA DESKTOP/TABLET
   $("stage-headers").style.display = "flex";
-  $("schedule-grid.desktop-grid") ? $("schedule-grid").style.display = "flex" : $("schedule-grid").style.display = "flex";
+  $("schedule-grid").style.display = "flex";
 
   const totalMinutes = (END_HOUR - START_HOUR) * 60;
   const gridHeight = totalMinutes * MINUTE_HEIGHT;
